@@ -181,16 +181,8 @@ abstract contract Governor is Context, ERC165, EIP712, IGovernor {
     /**
         @dev determines whether the specified account is allowed to create a new proposal.
      */
-    function _meetsProposalRequirements(address account) internal virtual returns (bool);
-    // function _meetsProposalRequirements(address account) internal virtual returns (bool){
-    //     uint256[] memory votes = getVotes(account, block.number - 1);
-    //     for (uint256 i =0; i < votes.length; i++){
-    //         if (votes[i]>0){
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
+    function _meetsProposalRequirements(address account) internal view virtual returns (bool);
+    
 
 
     /**

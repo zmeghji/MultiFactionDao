@@ -7,7 +7,7 @@ import "../Token/ERC1155Votes.sol";
 /**
 
  */
-abstract contract GovernorCountingSimple is Governor {
+abstract contract GovernorCounting is Governor {
     /**
      * @dev Supported vote types. 
      */
@@ -28,7 +28,7 @@ abstract contract GovernorCountingSimple is Governor {
     mapping (uint256 => mapping(address => bool)) _hasVoted;
 
 
-    ERC1155Votes _token;
+    ERC1155Votes internal _token;
     constructor(address tokenAddress){
         _token = ERC1155Votes(tokenAddress);
     }
