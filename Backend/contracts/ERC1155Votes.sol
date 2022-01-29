@@ -6,10 +6,19 @@ import "./ERC1155Supply.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
-//TODO document all functions 
+//TODO consider implementing token delegation
 
+/**
+ @title ERC1155 Voting Template
+ @author Zeeshan Meghji 
+ @notice Inherit from this contract to implement ERC1155 tokens which can be used for voting in DAOs
+ @dev The main functionality of this contract is maintaining checkpoints for whenever total supply of tokens or voting power of accounts change
+ */
 abstract contract ERC1155Votes is ERC1155Supply{
-    //TODO consider a voteschanged event
+    /**
+     * @dev Emitted when a token transfer results in changes to an account's voting power.
+     */
+    event VotesChanged(address indexed account, uint256 indexed tokenId, uint256 previousBalance, uint256 newBalance);
 
     struct Checkpoint {
         uint32 fromBlock;
@@ -22,10 +31,12 @@ abstract contract ERC1155Votes is ERC1155Supply{
     //Mapping from token id to total supply checkpoints
     mapping(uint => Checkpoint[]) private _totalSupplyCheckpoints;
 
-    //TODO consider splitting the nexttokenid part into a different contract
     //If a new token type is minted, it will use the value of nextTokenId as its id
-    uint256 nextTokenId;
+     uint256 public nextTokenId;
 
+    /**
+    @dev overrides _mint to ensure that newly minted token ids are one plus the previously minted token id
+     */
     function _mint(
         address to,
         uint256 id,
@@ -66,15 +77,17 @@ abstract contract ERC1155Votes is ERC1155Supply{
     }
 
     
-
+    /**
+    @dev helper function used to either update an existing checkpoint or add a new one if the total supply changes or tokens are transferred
+     */
     function _writeCheckpoint(
         Checkpoint[] storage ckpts,
         function(uint256, uint256) view returns (uint256) op,
         uint256 delta
-    ) private{
+    ) private returns (uint oldWeight, uint newWeight){
         uint256 pos = ckpts.length;
-        uint256 oldWeight = pos == 0 ? 0 : ckpts[pos - 1].votes;
-        uint256 newWeight = op(oldWeight, delta);
+        oldWeight = pos == 0 ? 0 : ckpts[pos - 1].votes;
+        newWeight = op(oldWeight, delta);
 
         if (pos > 0 && ckpts[pos - 1].fromBlock == block.number) {
             ckpts[pos - 1].votes = newWeight;
@@ -83,11 +96,12 @@ abstract contract ERC1155Votes is ERC1155Supply{
         }
     }
     
-
+    //@dev simple add function to be used as a parameter for _writeCheckpoint
     function _add(uint256 a, uint256 b) private pure returns (uint256) {
         return a + b;
     }
 
+    //@dev simple subtract function to be used as a parameter for _writeCheckpoint
     function _subtract(uint256 a, uint256 b) private pure returns (uint256) {
         return a - b;
     }
@@ -107,7 +121,6 @@ abstract contract ERC1155Votes is ERC1155Supply{
         if (nextTokenId == 0 ){
             revert ("ERC1155Votes: no token ids have been minted");
         }
-
         for (uint256 i = 0; i < nextTokenId; i++){
             uint numberOfCheckpoints = _checkpoints[account][i].length;
             if (numberOfCheckpoints == 0){
@@ -161,6 +174,9 @@ abstract contract ERC1155Votes is ERC1155Supply{
         return high == 0 ? 0 : ckpts[high - 1].votes;
     }
 
+    /**
+    @dev Gets the total supply of each token id (as an array) at the specified block number
+     */
     function getPastTotalSupply(uint256 blockNumber) public view returns (uint256[] memory supply) {
         require(blockNumber < block.number, "ERC1155Votes: block not yet mined");
 
@@ -169,6 +185,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
         }
     }
 
+    //@dev helper function used to update checkpoints when tokens are transferred
     function _moveVotingPower(
         address src,
         address dst,
@@ -178,13 +195,13 @@ abstract contract ERC1155Votes is ERC1155Supply{
         for (uint256 i =0; i< ids.length; i++){
             if (src != dst && amounts[i] > 0) {
                 if (src != address(0)) {
-                    _writeCheckpoint(_checkpoints[src][ids[i]], _subtract, amounts[i]);
-                    //TODO emit voteschanged event
+                    (uint256 oldWeight, uint256 newWeight) = _writeCheckpoint(_checkpoints[src][ids[i]], _subtract, amounts[i]);
+                    emit VotesChanged(src, ids[i], oldWeight, newWeight);
                 }
 
                 if (dst != address(0)) {
-                    _writeCheckpoint(_checkpoints[dst][ids[i]], _add, amounts[i]);
-                    //TODO emit voteschanged event
+                    (uint256 oldWeight, uint256 newWeight) =  _writeCheckpoint(_checkpoints[dst][ids[i]], _add, amounts[i]);
+                    emit VotesChanged(dst, ids[i], oldWeight, newWeight);
                 }
             }
         }
