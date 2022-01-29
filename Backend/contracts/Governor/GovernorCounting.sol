@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./Governor.sol";
 import "../Token/ERC1155Votes.sol";
-//TODO add documentation 
-/**
 
+/**
+@dev vote counting module for Governor using ERC1155Votes. keeps track of voting results for each proposal and whether an account has voted or not.
  */
 abstract contract GovernorCounting is Governor {
     /**
@@ -27,8 +27,9 @@ abstract contract GovernorCounting is Governor {
     // @dev proposal id => (account => voted or not)
     mapping (uint256 => mapping(address => bool)) _hasVoted;
 
-
+    //Represents the goverance token 
     ERC1155Votes internal _token;
+
     constructor(address tokenAddress){
         _token = ERC1155Votes(tokenAddress);
     }

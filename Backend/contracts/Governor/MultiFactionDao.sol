@@ -8,7 +8,6 @@ import "./GovernorTimelockControl.sol";
 
 /**
  @title Multi-Faction DAO
- @author Zeeshan Meghji 
  @notice This contract implements a DAO for a game with different factions. Each faction gets a single vote, and that factions vote is decided by the how the holder's of the factions token type vote.
  */
 contract MultiFactionDao is Governor,GovernorCounting,GovernorTimelockControl {

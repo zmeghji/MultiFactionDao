@@ -53,6 +53,8 @@ abstract contract ERC1155Votes is ERC1155Supply{
         nextTokenId++;
     }
 
+    //TODO implement override for _mintBatch so that necessary checks are done. It's not being used at the moment, but would be good to add.
+
      /**
      * @dev Snapshots the totalSupply after it has been decreased.
      */
