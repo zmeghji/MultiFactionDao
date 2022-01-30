@@ -46,6 +46,7 @@ abstract contract GovernorTimelockControl is IGovernorTimelock, Governor {
      */
     function state(uint256 proposalId) public view virtual override(IGovernor, Governor) returns (ProposalState) {
         ProposalState status = super.state(proposalId);
+        
 
         if (status != ProposalState.Succeeded) {
             return status;
@@ -86,6 +87,8 @@ abstract contract GovernorTimelockControl is IGovernorTimelock, Governor {
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public virtual override returns (uint256) {
+        
+
         uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
 
         require(state(proposalId) == ProposalState.Succeeded, "Governor: proposal not successful");

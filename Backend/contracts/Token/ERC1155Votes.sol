@@ -119,10 +119,12 @@ abstract contract ERC1155Votes is ERC1155Supply{
     /**
      * @dev Gets the current votes balance or each token id for `account`
      */
-    function getVotes(address account) public view returns (uint256[]memory votes) {
+    function getVotes(address account) public view returns (uint256[]memory ) {
         if (nextTokenId == 0 ){
             revert ("ERC1155Votes: no token ids have been minted");
         }
+        uint256[]memory votes = new uint256[](nextTokenId);
+
         for (uint256 i = 0; i < nextTokenId; i++){
             uint numberOfCheckpoints = _checkpoints[account][i].length;
             if (numberOfCheckpoints == 0){
@@ -132,6 +134,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
                 votes[i] = _checkpoints[account][i][numberOfCheckpoints-1].votes;
             }
         }
+        return votes;
     }
 
     /**
@@ -141,12 +144,13 @@ abstract contract ERC1155Votes is ERC1155Supply{
      *
      * - `blockNumber` must have been already mined
      */
-    function getPastVotes(address account, uint256 blockNumber) public view returns (uint256[] memory votes) {
+    function getPastVotes(address account, uint256 blockNumber) public view returns (uint256[] memory ) {
         require(blockNumber < block.number, "ERC1155Votes: block not yet mined");
-
+        uint256[] memory votes = new uint256[](nextTokenId);
         for (uint256 i = 0; i < nextTokenId; i++){
             votes[i] = _checkpointsLookup(_checkpoints[account][i], blockNumber);
         }
+        return votes;
     }
 
     // //_checkpointsLookup implementation taken from openzeppelin ERC20Votes.sol version 4.4.2
@@ -179,12 +183,15 @@ abstract contract ERC1155Votes is ERC1155Supply{
     /**
     @dev Gets the total supply of each token id (as an array) at the specified block number
      */
-    function getPastTotalSupply(uint256 blockNumber) public view returns (uint256[] memory supply) {
+    function getPastTotalSupply(uint256 blockNumber) public view returns (uint256[] memory ) {
         require(blockNumber < block.number, "ERC1155Votes: block not yet mined");
+        uint256[] memory supply = new uint256[](nextTokenId);
 
         for (uint256 i = 0; i < nextTokenId; i++){
             supply[i] = _checkpointsLookup(_totalSupplyCheckpoints[i], blockNumber);
         }
+
+        return supply;
     }
 
     //@dev helper function used to update checkpoints when tokens are transferred

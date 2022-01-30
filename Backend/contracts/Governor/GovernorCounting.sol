@@ -57,13 +57,14 @@ abstract contract GovernorCounting is Governor {
         public
         view
         virtual
-        returns (
-            ProposalVote[] memory votes
-        ) 
+        returns (ProposalVote[] memory ) 
     {
-        for (uint i = 0; i < _token.nextTokenId(); i ++){
+        uint256 nextTokenId = _token.nextTokenId();
+        ProposalVote[] memory votes = new ProposalVote[](nextTokenId);
+        for (uint i = 0; i < nextTokenId; i ++){
             votes[i] =  _proposalVotes[proposalId][i];
         }
+        return votes;
     }
 
     // /**
@@ -79,7 +80,8 @@ abstract contract GovernorCounting is Governor {
                 numberOfTokenIdsFor++;
             }
         }
-        return requiredForQuorum >= numberOfTokenIdsFor;
+
+        return numberOfTokenIdsFor >=requiredForQuorum;
     }
 
     /**
