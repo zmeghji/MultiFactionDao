@@ -57,7 +57,9 @@ contract MultiFactionDao is Governor,GovernorCounting,GovernorTimelockControl {
         return _token.getPastVotes(account, blockNumber);
     }
 
-    //TODO: make voting dealy/ voting period configurable
+    /**
+     * @dev See {IGovernor-quorum}.
+     */
     function quorum(uint256 blockNumber) public view override returns (uint256){
         return quorumRequirement;
     }

@@ -1,0 +1,61 @@
+Test Plan
+    X Game
+        - set difficulty  success
+        - set difficulty invalid number
+        - set difficulty not authorized
+
+    FactionVotes
+        - mint
+            - failure when token id not nexttokenid 
+            - faiure when trying to mint 0
+            - mint success, verify vote checkpoints, supply checkpoints, account balance
+        - getVotes
+            - success, verify results 
+            - failure if no token types exist
+        - getPastVotes
+            - failure for future block 
+            -success, check results 
+        - getPastTotalSupply
+            - failure for future block 
+            -success, check results 
+        - transfer
+            - verify that voting checkpoints are modified appropriately
+
+    MultiFactionDAO
+        - propose 
+            - should fail if user doesn't have tokens 
+
+        - getvotes 
+            - verify successful result
+        
+        - quorum, votingDelay, votingPeriod
+            - verify correct result 
+        - state
+            - test for each possible state 
+
+       
+        - supports interface
+            - check supports igovernor, IGovernorTimelock
+
+        -proposalEta,timelock()
+            - verify result
+
+        - queue
+            - fails when proposal is not yet successful 
+            - success
+        - execute
+
+        - cancel 
+
+        - hasVoted
+            - verify results
+        - proposalVotes
+            - verify results 
+        
+        cases for when _voteSucceeded and _quorumReached are false for better coverage
+
+
+
+
+
+
