@@ -9,7 +9,7 @@ async function main(){
 
     //Mint first 3 token types 
     const amountToMint = 10;
-    await factionVotes.mint(deployer.address, 0, amountToMint, hre.ethers.utils.formatBytes32String(""));
+    let tx = await factionVotes.mint(deployer.address, 0, amountToMint, hre.ethers.utils.formatBytes32String(""));
     await factionVotes.mint(deployer.address, 1, amountToMint, hre.ethers.utils.formatBytes32String(""));
     await factionVotes.mint(deployer.address, 2, amountToMint, hre.ethers.utils.formatBytes32String(""));
     console.log("Minted voting tokens");

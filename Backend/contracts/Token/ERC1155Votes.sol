@@ -29,7 +29,8 @@ abstract contract ERC1155Votes is ERC1155Supply{
     mapping(address => mapping (uint => Checkpoint[])) private _checkpoints;
 
     //Mapping from token id to total supply checkpoints
-    mapping(uint => Checkpoint[]) private _totalSupplyCheckpoints;
+    //TODO make this private again
+    mapping(uint => Checkpoint[]) public _totalSupplyCheckpoints;
 
     //If a new token type is minted, it will use the value of nextTokenId as its id
      uint256 public nextTokenId;
@@ -84,7 +85,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
 
         return supply;
     }
-    
+
     /**
     @dev overrides _mint to ensure that newly minted token ids are one plus the previously minted token id
      */
@@ -183,6 +184,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
         uint256 low = 0;
         while (low < high) {
             uint256 mid = Math.average(low, high);
+
             if (ckpts[mid].fromBlock > blockNumber) {
                 high = mid;
             } else {
