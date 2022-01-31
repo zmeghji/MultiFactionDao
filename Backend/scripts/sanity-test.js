@@ -35,7 +35,6 @@ async function main(){
     await timelockController.revokeRole(adminRole, deployer.address);
     console.log("Revoked deployer's admin role on timelock controller")
 
-
     //deploy game contract with  difficulty 0
     let game = await deploy("Game", [0])
 

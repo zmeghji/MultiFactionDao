@@ -34,26 +34,17 @@ Test Plan
         - state
             - test for each possible state 
 
-       
-        - supports interface
-            - check supports igovernor, IGovernorTimelock
-
-        -proposalEta,timelock()
-            - verify result
 
         - queue
             - fails when proposal is not yet successful 
             - success
         - execute
 
-        - cancel 
-
         - hasVoted
             - verify results
         - proposalVotes
             - verify results 
         
-        cases for when _voteSucceeded and _quorumReached are false for better coverage
 
 
 

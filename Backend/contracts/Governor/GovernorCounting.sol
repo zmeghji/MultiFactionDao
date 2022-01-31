@@ -25,7 +25,7 @@ abstract contract GovernorCounting is Governor {
     mapping(uint256 => mapping (uint256 =>ProposalVote)) private _proposalVotes;
 
     // @dev proposal id => (account => voted or not)
-    mapping (uint256 => mapping(address => bool)) _hasVoted;
+    mapping (uint256 => mapping(address => bool)) private _hasVoted;
 
     //Represents the goverance token 
     ERC1155Votes internal _token;
@@ -115,6 +115,7 @@ abstract contract GovernorCounting is Governor {
         uint256[] memory weights 
     ) internal virtual override {
         require(! _hasVoted[proposalId][account], "GovernorCounting: vote already cast");
+        _hasVoted[proposalId][account] =true;
         for (uint i = 0; i < _token.nextTokenId(); i ++){
             ProposalVote storage proposalvote = _proposalVotes[proposalId][i];
             if (support == uint8(VoteType.Against)) {

@@ -29,8 +29,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
     mapping(address => mapping (uint => Checkpoint[])) private _checkpoints;
 
     //Mapping from token id to total supply checkpoints
-    //TODO make this private again
-    mapping(uint => Checkpoint[]) public _totalSupplyCheckpoints;
+    mapping(uint => Checkpoint[]) private _totalSupplyCheckpoints;
 
     //If a new token type is minted, it will use the value of nextTokenId as its id
      uint256 public nextTokenId;
