@@ -10,15 +10,16 @@ Test Plan
             - faiure when trying to mint 0
             - mint success, verify vote checkpoints, supply checkpoints, account balance
         - getVotes
-            - success, verify results 
             - failure if no token types exist
         - getPastVotes
             - failure for future block 
-            -success, check results 
+            - failure if no token types exist
+
         - getPastTotalSupply
             - failure for future block 
             -success, check results 
-        - transfer
+
+        - transfer/batch transfer
             - verify that voting checkpoints are modified appropriately
 
     MultiFactionDAO

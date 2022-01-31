@@ -38,10 +38,8 @@ abstract contract ERC1155Votes is ERC1155Supply{
     /**
      * @dev Gets the current votes balance or each token id for `account`
      */
-    function getVotes(address account) public view returns (uint256[]memory ) {
-        if (nextTokenId == 0 ){
-            revert ("ERC1155Votes: no token ids have been minted");
-        }
+    function getVotes(address account) public view ifTokenIdMinted returns (uint256[]memory )  {
+        
         uint256[]memory votes = new uint256[](nextTokenId);
 
         for (uint256 i = 0; i < nextTokenId; i++){
@@ -63,7 +61,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
      *
      * - `blockNumber` must have been already mined
      */
-    function getPastVotes(address account, uint256 blockNumber) public view returns (uint256[] memory ) {
+    function getPastVotes(address account, uint256 blockNumber) public view ifTokenIdMinted returns (uint256[] memory ) {
         require(blockNumber < block.number, "ERC1155Votes: block not yet mined");
         uint256[] memory votes = new uint256[](nextTokenId);
         for (uint256 i = 0; i < nextTokenId; i++){
@@ -75,7 +73,7 @@ abstract contract ERC1155Votes is ERC1155Supply{
     /**
     @dev Gets the total supply of each token id (as an array) at the specified block number
      */
-    function getPastTotalSupply(uint256 blockNumber) public view returns (uint256[] memory ) {
+    function getPastTotalSupply(uint256 blockNumber) public view ifTokenIdMinted() returns (uint256[] memory ) {
         require(blockNumber < block.number, "ERC1155Votes: block not yet mined");
         uint256[] memory supply = new uint256[](nextTokenId);
 
@@ -85,7 +83,10 @@ abstract contract ERC1155Votes is ERC1155Supply{
 
         return supply;
     }
-
+    modifier ifTokenIdMinted(){
+        require(nextTokenId > 0 ,"ERC1155Votes: no token ids have been minted");
+        _;
+    }
     /**
     @dev overrides _mint to ensure that newly minted token ids are one plus the previously minted token id
      */
