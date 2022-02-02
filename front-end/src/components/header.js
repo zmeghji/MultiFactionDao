@@ -17,13 +17,11 @@ const Img = styled.img`
     height: 8rem;
     pointer-events: none;
 `
-export default class Header extends Component {
-    render() {
-        return (
-            <HeaderTag >
-                <Img src={logo} alt="logo" className="App-logo" />
-                <h1>Multi-Faction DAO</h1>
-            </HeaderTag>
+export default function Header (props){
+    return (
+        <HeaderTag >
+            <Img src={logo} alt="logo" className="App-logo" />
+            <h1>Multi-Faction DAO</h1>
+        </HeaderTag>
         )
-    }
 }

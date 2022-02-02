@@ -4,6 +4,8 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import Instructions from './components/instructions'
+import Balance from './components/balance'
+
 import {
   BrowserRouter,
   Routes,
@@ -16,6 +18,7 @@ ReactDOM.render(
       <Routes>
           <Route  path="/" element={<App />}>
             <Route path="instructions" element={<Instructions />} />
+            <Route path="balance" element={<Balance />} />
           </Route>
       </Routes>
     </BrowserRouter>

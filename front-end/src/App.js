@@ -9,11 +9,17 @@ import { Outlet, Link } from "react-router-dom";
 
 import 'bootswatch/dist/flatly/bootstrap.min.css'
 
+import tokenAbi from './abis/FactionVotes.json';
+
 function App() {
-  // const [userAddress, setUserAddress] = useState("");
+  let tokenAddress = '0x2830b7F3475dD3b80216A66d4eE461E973dCD09A';
+
   const [provider, setProvider] = useState(null);
 	const [signer, setSigner] = useState(null);
   const [defaultAccount, setDefaultAccount] = useState(null);
+  const [tokenContract, setTokenContract] = useState(null);
+  const [tokenBalance, setTokenBalance] = useState(null);
+
 
   const getDefaultAccount = () =>{
     return defaultAccount;
@@ -25,18 +31,31 @@ function App() {
 			})
 	}
 
-  const accountChangedHandler = (newAccount) => {
+  const getTokenBalance = async () => {
+    let nextTokenId = (await tokenContract.nextTokenId()).toNumber();
+    console.log(`next Token Id is ${nextTokenId}`);
+    let promises = [...Array(nextTokenId).keys()].map( tokenId => tokenContract.balanceOf(defaultAccount,tokenId))
+    let balances = await Promise.all(promises);
+    balances = balances.map(b => b.toNumber());
+    console.log(balances);
+    setTokenBalance(balances)
+  }
+
+  const accountChangedHandler = async (newAccount) => {
 		setDefaultAccount(newAccount);
-		updateEthers();
+		await updateEthers();
 	}
   
-  const updateEthers = () => {
+  const updateEthers = async () => {
 		let tempProvider = new ethers.providers.Web3Provider(window.ethereum);
 		setProvider(tempProvider);
 
 		let tempSigner = tempProvider.getSigner();
 		setSigner(tempSigner);
-
+    let tempTokenContract = new ethers.Contract(tokenAddress, tokenAbi, tempSigner);
+    console.log(tempTokenContract)
+		setTokenContract(tempTokenContract);
+    
 	}
 
   // listen for account changes
@@ -49,7 +68,7 @@ function App() {
         <Header />
       </div>
       <div className="row">
-        <div className='col-md-3' style={{"padding-left": 0}}>
+        <div className='col-md-3' style={{"paddingLeft": 0}}>
           <SideBar />
         </div>
           <div className='col-md-8'>
@@ -58,6 +77,7 @@ function App() {
               getDefaultAccount={getDefaultAccount}/>
 
               <div className="row">
+                <button onClick={getTokenBalance}>fake button </button>
                 <Outlet />
               </div>
           </div>
