@@ -33,7 +33,7 @@ export default function Balance(props) {
             <tbody>
                 {
                     props.tokenBalance.map((b, i) =>
-                        <tr>
+                        <tr key={i}>
                             <th>{i}</th>
                             <td>{getFaction(i)}</td>
                             <td>{b}</td>

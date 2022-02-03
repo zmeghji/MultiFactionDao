@@ -32,7 +32,7 @@ export default function SideBar(props) {
                         </li>
                         <li>
                             <a href="#" className="nav-link text-white" onClick={() => props.setPage("Proposal")}>
-                                Proposals
+                                Proposal
                             </a>
                         </li>
                     </>

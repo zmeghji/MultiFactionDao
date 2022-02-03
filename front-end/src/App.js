@@ -9,22 +9,34 @@ import { Outlet, Link } from "react-router-dom";
 
 import 'bootswatch/dist/flatly/bootstrap.min.css'
 
+//abis
 import tokenAbi from './abis/FactionVotes.json';
+import gameAbi from './abis/Game.json';
 
+
+//components
 import Instructions from './components/instructions.js';
 import Balance from './components/balance.js';
+import Proposal from './components/proposal.js';
 
 
 function App() {
   let tokenAddress = '0xC432Caa8251514802B1c42d7307bc722D8fA6d1b';
+  let gameAddress = '0x06f493Ec1968Ee91c5E0804fB3C3964B62164960';
+  let governorAddress = '';
+
 
   const [provider, setProvider] = useState(null);
 	const [signer, setSigner] = useState(null);
   const [defaultAccount, setDefaultAccount] = useState(null);
+
   const [tokenContract, setTokenContract] = useState(null);
   const [tokenBalance, setTokenBalance] = useState(null);
-
   const [tokensPending, setTokensPending] = useState(false);
+
+  const [gameContract, setGameContract] = useState(null);
+  const [currentGameDifficulty, setCurrentGameDifficulty] = useState(null);
+
 
 
   const [page, setPage]= useState("Instructions");
@@ -33,7 +45,8 @@ function App() {
     if(tokenBalance ===null && tokenContract !== null){
       await getTokenBalance();
     }
-    else{
+    if(currentGameDifficulty ===null && gameContract !== null){
+      await getGameDifficulty();
     }
 
   })
@@ -72,6 +85,13 @@ function App() {
     setTokenBalance(balances)
   }
 
+  const getGameDifficulty = async () =>{
+    let difficultyTemp =(await gameContract.difficulty()).toNumber();
+    console.log(`difficulty: ${difficultyTemp}`);
+    setCurrentGameDifficulty(difficultyTemp);
+
+  }
+
   const accountChangedHandler = async (newAccount) => {
 		setDefaultAccount(newAccount);
 		await updateEthers();
@@ -83,9 +103,12 @@ function App() {
 
 		let tempSigner = tempProvider.getSigner();
 		setSigner(tempSigner);
+
     let tempTokenContract = new ethers.Contract(tokenAddress, tokenAbi, tempSigner);
-    console.log(tempTokenContract)
 		setTokenContract(tempTokenContract);
+
+    let tempGameContract = new ethers.Contract(gameAddress, gameAbi, tempSigner);
+    setGameContract(tempGameContract);
     
 	}
 
@@ -116,6 +139,9 @@ function App() {
                     tokenBalance={tokenBalance}
                     getMoreTokens={getMoreTokens}
                     tokensPending={tokensPending} /> : ""}
+                {page == "Proposal"? 
+                  <Proposal currentGameDifficulty={currentGameDifficulty}/>:""}
+                  
 
 
               </div>
