@@ -96,13 +96,15 @@ abstract contract ERC1155Votes is ERC1155Supply{
         bytes memory data
     )internal virtual override{
         require(amount >0, "ERC1155Votes: must mint more than 0");
-        require(totalSupply(id)==0 && id == nextTokenId, "ERC1155Votes: if minting new token id, it must equal nextTokenId");
+        require(totalSupply(id) > 0 || id == nextTokenId, "ERC1155Votes: if minting new token id, it must equal nextTokenId");
 
         super._mint(to, id,amount, data);
         require(totalSupply(id) <= _maxSupply(), "ERC1155Votes: total supply risks overflowing votes");
         _writeCheckpoint(_totalSupplyCheckpoints[id], _add, amount);
 
-        nextTokenId++;
+        if (id == nextTokenId){
+            nextTokenId++;
+        }
     }
 
     //TODO implement override for _mintBatch so that necessary checks are done. It's not being used at the moment, but would be good to add.

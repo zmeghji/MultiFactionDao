@@ -1,9 +1,6 @@
 import React, { Component } from 'react'
 import logo from '../logo.svg';
 import styled from 'styled-components';
-import {Link ,NavLink} from "react-router-dom";
-import Instructions from './instructions'
-import Balance from './balance'
 
 const Div = styled.section`
     padding-left: 0px;
@@ -13,7 +10,7 @@ const Div = styled.section`
 `
 
 
-export default function SideBar(props){
+export default function SideBar(props) {
     return (
         <Div className="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" >
             <a href="/" className="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
@@ -22,25 +19,24 @@ export default function SideBar(props){
             <hr />
             <ul className="nav nav-pills flex-column mb-auto">
                 <li className="nav-item">
-                    <NavLink 
-                        className="nav-link" 
-                        aria-current="page" 
-                        to="/instructions">Instructions</NavLink>
-                </li>
-                <li>
-                    {/* <a href="#" className="nav-link text-white">
-                        Balance
-                    </a> */}
-                    <NavLink 
-                        className="nav-link" 
-                        aria-current="page" 
-                        to="/balance">Balance</NavLink>
-                </li>
-                <li>
-                    <a href="#" className="nav-link text-white">
-                        Proposals
+                    <a href="#" className="nav-link text-white" onClick={() => props.setPage("Instructions")}>
+                        Instructions
                     </a>
                 </li>
+                {props.defaultAccount != null ?
+                    <>
+                        <li>
+                            <a href="#" className="nav-link text-white " onClick={() => props.setPage("Balance")}>
+                                Balance
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" className="nav-link text-white" onClick={() => props.setPage("Proposal")}>
+                                Proposals
+                            </a>
+                        </li>
+                    </>
+                    : ""}
             </ul>
             <hr />
         </Div>

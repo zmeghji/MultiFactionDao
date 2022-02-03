@@ -11,14 +11,32 @@ import 'bootswatch/dist/flatly/bootstrap.min.css'
 
 import tokenAbi from './abis/FactionVotes.json';
 
+import Instructions from './components/instructions.js';
+import Balance from './components/balance.js';
+
+
 function App() {
-  let tokenAddress = '0x2830b7F3475dD3b80216A66d4eE461E973dCD09A';
+  let tokenAddress = '0xC432Caa8251514802B1c42d7307bc722D8fA6d1b';
 
   const [provider, setProvider] = useState(null);
 	const [signer, setSigner] = useState(null);
   const [defaultAccount, setDefaultAccount] = useState(null);
   const [tokenContract, setTokenContract] = useState(null);
   const [tokenBalance, setTokenBalance] = useState(null);
+
+  const [tokensPending, setTokensPending] = useState(false);
+
+
+  const [page, setPage]= useState("Instructions");
+
+  useEffect(async function(){
+    if(tokenBalance ===null && tokenContract !== null){
+      await getTokenBalance();
+    }
+    else{
+    }
+
+  })
 
 
   const getDefaultAccount = () =>{
@@ -31,6 +49,19 @@ function App() {
 			})
 	}
 
+  const getMoreTokens = async (tokenId) =>{
+    setTokensPending(true);
+    try{
+      let tx  = await tokenContract.faucet(tokenId);
+      await tx.wait()
+      let tokenBalanceCopy = [...tokenBalance];
+      tokenBalanceCopy[tokenId]+= 10;
+      setTokenBalance(tokenBalanceCopy);
+    }
+    finally{
+      setTokensPending(false);
+    }
+  }
   const getTokenBalance = async () => {
     let nextTokenId = (await tokenContract.nextTokenId()).toNumber();
     console.log(`next Token Id is ${nextTokenId}`);
@@ -69,7 +100,9 @@ function App() {
       </div>
       <div className="row">
         <div className='col-md-3' style={{"paddingLeft": 0}}>
-          <SideBar />
+          <SideBar 
+            setPage={setPage}
+            defaultAccount={defaultAccount} />
         </div>
           <div className='col-md-8'>
             <LogIn 
@@ -77,8 +110,14 @@ function App() {
               getDefaultAccount={getDefaultAccount}/>
 
               <div className="row">
-                <button onClick={getTokenBalance}>fake button </button>
-                <Outlet />
+                {page == "Instructions"? <Instructions />:""}
+                {page == "Balance"? 
+                  <Balance 
+                    tokenBalance={tokenBalance}
+                    getMoreTokens={getMoreTokens}
+                    tokensPending={tokensPending} /> : ""}
+
+
               </div>
           </div>
       </div>

@@ -27,6 +27,12 @@ contract FactionVotes is Ownable, ERC1155,ERC1155Supply,ERC1155Votes {
         _mint(to, id, amount, data);
     }
 
+    //@dev publicly available function to request tokens (used for easy demo from front-end)
+    function faucet(uint256 id) external{
+        _mint(msg.sender, id, 10, "");
+    }
+
+
     function _afterTokenTransfer(
         address operator,
         address from,
