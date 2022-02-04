@@ -12,18 +12,20 @@ import 'bootswatch/dist/flatly/bootstrap.min.css'
 //abis
 import tokenAbi from './abis/FactionVotes.json';
 import gameAbi from './abis/Game.json';
+import governorAbi from './abis/Governor.json';
+
 
 
 //components
 import Instructions from './components/instructions.js';
 import Balance from './components/balance.js';
-import Proposal from './components/proposal.js';
+import Proposal from './components/proposal/proposal.js';
 
 
 function App() {
   let tokenAddress = '0xC432Caa8251514802B1c42d7307bc722D8fA6d1b';
   let gameAddress = '0x06f493Ec1968Ee91c5E0804fB3C3964B62164960';
-  let governorAddress = '';
+  let governorAddress = '0x77512fC0A46ee70651D12D680f53a1095e85A0cE';
 
 
   const [provider, setProvider] = useState(null);
@@ -37,6 +39,7 @@ function App() {
   const [gameContract, setGameContract] = useState(null);
   const [currentGameDifficulty, setCurrentGameDifficulty] = useState(null);
 
+  const [governorContract, setGovernorContract] = useState(null);
 
 
   const [page, setPage]= useState("Instructions");
@@ -110,6 +113,8 @@ function App() {
     let tempGameContract = new ethers.Contract(gameAddress, gameAbi, tempSigner);
     setGameContract(tempGameContract);
     
+    let tempGovernorContract = new ethers.Contract(governorAddress, governorAbi, tempSigner);
+    setGovernorContract(tempGovernorContract);
 	}
 
   // listen for account changes
@@ -140,7 +145,11 @@ function App() {
                     getMoreTokens={getMoreTokens}
                     tokensPending={tokensPending} /> : ""}
                 {page == "Proposal"? 
-                  <Proposal currentGameDifficulty={currentGameDifficulty}/>:""}
+                  <Proposal 
+                    currentGameDifficulty={currentGameDifficulty}
+                    governorContract={governorContract}
+                    gameAddress={gameAddress}
+                    />:""}
                   
 
 

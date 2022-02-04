@@ -135,4 +135,23 @@ contract MultiFactionDao is Governor,GovernorCounting,GovernorTimelockControl {
         return super.supportsInterface(interfaceId);
     }
 
+    //@dev override for propose method which also sets the proposal details in storage
+    function propose(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory calldatas,
+        string memory description
+    ) public override(IGovernor, Governor) returns (uint256 proposalId){
+        mostRecentProposalId = hashProposal(targets, values, calldatas, keccak256(bytes(description)));
+        mostRecentProposalCalldatas = calldatas;
+        mostRecentProposalDescription = description;
+        return super.propose(targets, values, calldatas, description);
+    }
+
+    //@dev these fields are a hack to make it easier read the most recent proposal data from thefront-end
+    uint256 public mostRecentProposalId;
+    bytes[] public mostRecentProposalCalldatas;
+    string public mostRecentProposalDescription;
+    
+
 }
