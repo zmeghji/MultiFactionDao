@@ -14,6 +14,64 @@ export default function Proposal(props) {
 
     const [currentProposal, setCurrentProposal] = useState(null);
 
+    const getStatus = (statusId) =>{
+        if (statusId = 0){
+            return "Pending";
+        }
+        else if (statusId = 1){
+            return "Active";
+        }
+        else if (statusId = 2){
+            return "Canceled";
+        }
+        else if (statusId = 3){
+            return "Defeated";
+        }
+        else if (statusId = 4){
+            return "Succeeded";
+        }
+        else if (statusId = 5){
+            return "Queued";
+        }
+        else if (statusId = 6){
+            return "Expired";
+        }
+        else if (statusId = 7){
+            return "Executed";
+        }
+        else{
+            throw "Unknown status Id"
+        }
+    }
+    useEffect(async function(){
+        if(currentProposal ===null ){
+            let proposalInfo = await Promise.all([
+                props.governorContract.mostRecentProposalId(),
+                props.governorContract.mostRecentProposalDescription()
+            ]);
+            
+
+            let statusId = props.governorContract.state(proposalInfo[0]);
+
+
+            let hasVoted = props.governorContract.hasVoted(proposalInfo[0], props.defaultAccount);
+
+            setCurrentProposal({
+                proposalId: proposalInfo[0],
+                description: proposalInfo[1],
+                status: getStatus(statusId),
+                hasVoted: hasVoted
+            })
+
+
+        }
+    
+      })
+    
+    const getMostRecentProposal = async ()=>{
+
+    }
+
 
     const handleDifficultyChange = (event) => {
         setDifficulty(event.target.value);
@@ -53,17 +111,27 @@ export default function Proposal(props) {
         }
     }
 
+    const vote = async (direction) => {
+
+    }
     return (
         <>
             {currentProposal != null ? 
             
-            <div class="card">
-                <div class="card-header">
+            <div className="card">
+                <div className="card-header">
                     Current Proposal
                 </div>
-                <div class="card-body">
-                    {/* <h5 class="card-title">Status goes here</h5> */}
-                    <p class="card-text">{currentProposal.description}</p>
+                <div className="card-body">
+                    <h5 class="card-title">Status: {currentProposal.status}</h5>
+                    <p className="card-text">{currentProposal.description}</p>
+                    {
+                        currentProposal.hasVoted ? "":
+                        <>
+                            <button className="btn btn-success">Vote For</button>
+                            <button className="btn btn-danger">Vote Against</button>
+                        </>
+                    }
                     {/* <a href="#" class="btn btn-primary">Go somewhere</a> */}
                 </div>
             </div> 

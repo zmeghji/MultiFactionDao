@@ -23,9 +23,9 @@ import Proposal from './components/proposal/proposal.js';
 
 
 function App() {
-  let tokenAddress = '0xC432Caa8251514802B1c42d7307bc722D8fA6d1b';
-  let gameAddress = '0x06f493Ec1968Ee91c5E0804fB3C3964B62164960';
-  let governorAddress = '0x77512fC0A46ee70651D12D680f53a1095e85A0cE';
+  let tokenAddress = '0x59d77dce8D2eb810e980B4e7dbE60f120F700A6f';
+  let gameAddress = '0x2F19a57dB0e19589E87e783374175b7666827B5f';
+  let governorAddress = '0xC5c8670B08861b06834f56f9fDCb570Fa21e06B4';
 
 
   const [provider, setProvider] = useState(null);
@@ -149,6 +149,7 @@ function App() {
                     currentGameDifficulty={currentGameDifficulty}
                     governorContract={governorContract}
                     gameAddress={gameAddress}
+                    defaultAccount={defaultAccount}
                     />:""}
                   
 
