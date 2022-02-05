@@ -21,7 +21,7 @@ async function main(){
     console.log("Minted voting tokens");
 
     //Deploy the timelock controller
-    let timelockController = await deploy("TimelockController", [1, [], []]);
+    let timelockController = await deploy("TimelockController", [0, [], []]);
 
     //Deploy the governance contract 
     let multiFactionDao = await deploy ("MultiFactionDao", 

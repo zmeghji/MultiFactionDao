@@ -5,10 +5,18 @@ import Modal from "react-bootstrap/Modal";
 
 import CreateProposal from './createProposal.js';
 
-import styled from 'styled-components';
 
-// import '@fortawesome/fontawesome-free/js/all';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
+import { library } from '@fortawesome/fontawesome-svg-core'
+import {
+  faSync
+} from '@fortawesome/free-solid-svg-icons'
+
+library.add(
+    faSync
+)
+
 
 
 
@@ -19,6 +27,8 @@ export default function Proposal(props) {
     const [creatingProposal, setCreatingProposal] = useState(false);
     const [waitingForVote, setWaitingForVote] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [queuingProposal, setQueuingProposal] = useState(false);
+    const [executingProposal, setExecutingProposal] = useState(false);
 
     const [previousProposal, setPreviousProposal] = useState(null);
 
@@ -67,7 +77,8 @@ export default function Proposal(props) {
         if (currentProposal === null && previousProposal ===null) {
             let proposalInfo = await Promise.all([
                 props.governorContract.mostRecentProposalId(),
-                props.governorContract.mostRecentProposalDescription()
+                props.governorContract.mostRecentProposalDescription(),
+                props.governorContract.mostRecentProposalCalldatas(0),
             ]);
 
 
@@ -79,7 +90,8 @@ export default function Proposal(props) {
                     proposalId: proposalInfo[0],
                     description: proposalInfo[1],
                     status: getStatusName(statusId),
-                    hasVoted: hasVoted
+                    hasVoted: hasVoted,
+                    calldata: proposalInfo[2]
                 })
             }
             else{
@@ -87,7 +99,8 @@ export default function Proposal(props) {
                     proposalId: proposalInfo[0],
                     description: proposalInfo[1],
                     status: getStatusName(statusId),
-                    hasVoted: hasVoted
+                    hasVoted: hasVoted,
+                    calldata: proposalInfo[2]
                 })
             }
 
@@ -114,7 +127,7 @@ export default function Proposal(props) {
             let targets = [props.gameAddress];
             let values = [0];
             let calldatas = [encodedFunction];
-            let fullDescription = `${description} Upon execution this proposal will change the game difficulty to ${difficulty}`;
+            let fullDescription = `${description} Upon execution, this proposal will change the game difficulty to ${difficulty}`;
             let tx = await props.governorContract.propose(
                 targets,
                 values,
@@ -175,6 +188,47 @@ export default function Proposal(props) {
         setRefreshing(false);
     }
 
+    const queue = async () =>{
+        try{
+            setQueuingProposal(true);
+            let tx = await props.governorContract.queue(
+                [props.gameAddress],
+                [0],
+                [currentProposal.calldata],
+                ethers.utils.id(currentProposal.description)
+            )
+            await tx.wait();
+            let tmpCurrentProposal = currentProposal;
+            tmpCurrentProposal.status = "Queued"
+            setCurrentProposal(tmpCurrentProposal);
+        }
+        finally{
+            setQueuingProposal(false);
+        }
+    }
+
+    const execute = async () =>{
+        try{
+            setExecutingProposal(true);
+            let tx = await props.governorContract.execute(
+                [props.gameAddress],
+                [0],
+                [currentProposal.calldata],
+                ethers.utils.id(currentProposal.description)
+            )
+            await tx.wait();
+            await props.refreshGameDifficulty();
+            let tmpCurrentProposal = currentProposal;
+            tmpCurrentProposal.status = "Executed"
+            setPreviousProposal(tmpCurrentProposal);
+            setCurrentProposal(null);
+            
+        }
+        finally{
+            setExecutingProposal(false);
+        }
+    }
+
     return (
         <>
             {previousProposal != null && currentProposal== null ? 
@@ -195,15 +249,15 @@ export default function Proposal(props) {
                 <>
                     <div className="card">
                         <div className="card-header">
-                            Current Proposal 
+                            Current Proposal
                             <FontAwesomeIcon 
                                 onClick={refresh} 
-                                icon={["fas", "sync"]}
+                                icon={["fa", "sync"]}
                                 style={{"color": "#18bc9c", "cursor": "pointer", "marginLeft": "1rem"}} />
                             
                                 { refreshing ?
                                 <div 
-                                    class="spinner-grow text-success"
+                                    className="spinner-grow text-success"
                                     style={{"marginLeft": "1rem"}}
                                      role="status"></div>
                                      :""
@@ -224,14 +278,49 @@ export default function Proposal(props) {
                                     </>
                             }
                             {
-                                currentProposal.hasVoted ? <p className="text-info">Thank you for voting</p> : ""
+                                currentProposal.hasVoted &&currentProposal.status == "Active"? <p className="text-info">Thank you for voting</p> : ""
+                            }
+
+                            {
+                                currentProposal.status == "Succeeded"?
+                                <button 
+                                    className="btn btn-warning"
+                                    onClick={queue}>Queue For Execution</button>
+                                
+                                :""
+                            }
+                            {
+                                currentProposal.status == "Queued"?
+                                <button 
+                                    className="btn btn-secondary"
+                                    onClick={execute}>Execute Proposal</button>
+                                
+                                :""
                             }
                         </div>
                     </div>
                     <Modal show={waitingForVote}>
                         <Modal.Header>Just a Moment...</Modal.Header>
                         <Modal.Body>
-                            We're casting your vote!
+                            We're casting your vote! This could take up to 30 seconds.
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="sr-only"></span>
+                            </div>
+                        </Modal.Body>
+                    </Modal>
+                    <Modal show={queuingProposal}>
+                        <Modal.Header>Just a Moment...</Modal.Header>
+                        <Modal.Body>
+                            Queueing the proposal for execution. This could take up to 30 seconds.
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="sr-only"></span>
+                            </div>
+                        </Modal.Body>
+                    </Modal>
+                    <Modal show={executingProposal}>
+                        <Modal.Header>Just a Moment...</Modal.Header>
+                        <Modal.Body>
+                            Executing the proposal. This could take up to 30 seconds.
                             <div className="spinner-border text-primary" role="status">
                                 <span className="sr-only"></span>
                             </div>

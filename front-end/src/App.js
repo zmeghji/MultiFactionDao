@@ -49,7 +49,7 @@ function App() {
       await getTokenBalance();
     }
     if(currentGameDifficulty ===null && gameContract !== null){
-      await getGameDifficulty();
+      await refreshGameDifficulty();
     }
 
   })
@@ -88,7 +88,7 @@ function App() {
     setTokenBalance(balances)
   }
 
-  const getGameDifficulty = async () =>{
+  const refreshGameDifficulty = async () =>{
     let difficultyTemp =(await gameContract.difficulty()).toNumber();
     console.log(`difficulty: ${difficultyTemp}`);
     setCurrentGameDifficulty(difficultyTemp);
@@ -147,6 +147,7 @@ function App() {
                 {page == "Proposal"? 
                   <Proposal 
                     currentGameDifficulty={currentGameDifficulty}
+                    refreshGameDifficulty = {refreshGameDifficulty}
                     governorContract={governorContract}
                     gameAddress={gameAddress}
                     defaultAccount={defaultAccount}
