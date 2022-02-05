@@ -11,7 +11,11 @@ export default function CreateProposal(props) {
     
     return (
         <>
+            
             <form>
+                <div className="card-header">
+                    Create New Proposal
+                </div>
                 <div className="form-group">
                     <label htmlFor="currentDifficulty">Current Game Difficulty</label>
                     <select className="form-control" id="currentDifficulty" disabled>

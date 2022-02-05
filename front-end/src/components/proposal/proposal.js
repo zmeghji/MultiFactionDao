@@ -5,73 +5,96 @@ import Modal from "react-bootstrap/Modal";
 
 import CreateProposal from './createProposal.js';
 
+import styled from 'styled-components';
+
+// import '@fortawesome/fontawesome-free/js/all';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
 
 
 export default function Proposal(props) {
     const [difficulty, setDifficulty] = useState(0);
     const [description, setDescription] = useState(0);
+
     const [creatingProposal, setCreatingProposal] = useState(false);
+    const [waitingForVote, setWaitingForVote] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [previousProposal, setPreviousProposal] = useState(null);
 
     const [currentProposal, setCurrentProposal] = useState(null);
-
-    const getStatus = (statusId) =>{
-        if (statusId = 0){
+    const isProposalInProgress = (statusId) => {
+        switch (statusId) {
+            case 0:
+            case 1:
+            case 4:
+            case 5:
+                return true;
+            default:
+                return false;
+        }
+    }
+    const getStatusName = (statusId) => {
+        if (statusId == 0) {
             return "Pending";
         }
-        else if (statusId = 1){
+        else if (statusId == 1) {
             return "Active";
         }
-        else if (statusId = 2){
+        else if (statusId == 2) {
             return "Canceled";
         }
-        else if (statusId = 3){
+        else if (statusId == 3) {
             return "Defeated";
         }
-        else if (statusId = 4){
+        else if (statusId == 4) {
             return "Succeeded";
         }
-        else if (statusId = 5){
+        else if (statusId == 5) {
             return "Queued";
         }
-        else if (statusId = 6){
+        else if (statusId == 6) {
             return "Expired";
         }
-        else if (statusId = 7){
+        else if (statusId == 7) {
             return "Executed";
         }
-        else{
+        else {
             throw "Unknown status Id"
         }
     }
-    useEffect(async function(){
-        if(currentProposal ===null ){
+    useEffect(async function () {
+        if (currentProposal === null && previousProposal ===null) {
             let proposalInfo = await Promise.all([
                 props.governorContract.mostRecentProposalId(),
                 props.governorContract.mostRecentProposalDescription()
             ]);
-            
-
-            let statusId = props.governorContract.state(proposalInfo[0]);
 
 
-            let hasVoted = props.governorContract.hasVoted(proposalInfo[0], props.defaultAccount);
+            let statusId = await getStatus(proposalInfo[0]);
 
-            setCurrentProposal({
-                proposalId: proposalInfo[0],
-                description: proposalInfo[1],
-                status: getStatus(statusId),
-                hasVoted: hasVoted
-            })
+            let hasVoted = await props.governorContract.hasVoted(proposalInfo[0], props.defaultAccount);
+            if (isProposalInProgress(statusId)) {
+                setCurrentProposal({
+                    proposalId: proposalInfo[0],
+                    description: proposalInfo[1],
+                    status: getStatusName(statusId),
+                    hasVoted: hasVoted
+                })
+            }
+            else{
+                setPreviousProposal({
+                    proposalId: proposalInfo[0],
+                    description: proposalInfo[1],
+                    status: getStatusName(statusId),
+                    hasVoted: hasVoted
+                })
+            }
 
 
         }
-    
-      })
-    
-    const getMostRecentProposal = async ()=>{
 
-    }
-
+    })
 
     const handleDifficultyChange = (event) => {
         setDifficulty(event.target.value);
@@ -103,7 +126,8 @@ export default function Proposal(props) {
                 targets: targets,
                 values: values,
                 calldatas: calldatas,
-                description: fullDescription
+                description: fullDescription,
+                status: getStatusName(0)
             })
         }
         finally {
@@ -112,31 +136,111 @@ export default function Proposal(props) {
     }
 
     const vote = async (direction) => {
+        //TODO implement case where we don't currently have the proposal id, either by doing client side hash or calling hash proposal
+        try{
+            setWaitingForVote(true);
+            let tx = await props.governorContract.castVote(currentProposal.proposalId, direction);
+            await tx.wait()
+
+            let tmpProposal = currentProposal;
+            tmpProposal.hasVoted = true;
+            setCurrentProposal(tmpProposal);
+        }
+        finally{
+            setWaitingForVote(false);
+        }
 
     }
+
+    const getStatus = async (proposalId) =>{
+        return await props.governorContract.state(proposalId);
+    }
+    const refresh = async () =>{
+        console.log("refreshing")
+        //TODO handle case where proposal id is not stored
+        setRefreshing(true);
+        let statusId = await  getStatus(currentProposal.proposalId);
+
+        let tmpCurrentProposal = currentProposal;
+        tmpCurrentProposal.status = getStatusName(statusId) ;
+        if (!isProposalInProgress(statusId)){
+            setPreviousProposal(tmpCurrentProposal);
+            setCurrentProposal(null);
+        }
+        else{
+            setCurrentProposal(tmpCurrentProposal);
+        }
+
+
+        setRefreshing(false);
+    }
+
     return (
         <>
-            {currentProposal != null ? 
-            
-            <div className="card">
-                <div className="card-header">
-                    Current Proposal
+            {previousProposal != null && currentProposal== null ? 
+            <>
+                <div className="card">
+                    <div className="card-header">
+                        Previous Proposal
+                    </div>
+                    <div className="card-body">
+                        <h5 className="card-title">Status: {previousProposal.status}</h5>
+                        <p className="card-text">{previousProposal.description}</p>
+                    </div>
                 </div>
-                <div className="card-body">
-                    <h5 class="card-title">Status: {currentProposal.status}</h5>
-                    <p className="card-text">{currentProposal.description}</p>
-                    {
-                        currentProposal.hasVoted ? "":
-                        <>
-                            <button className="btn btn-success">Vote For</button>
-                            <button className="btn btn-danger">Vote Against</button>
-                        </>
-                    }
-                    {/* <a href="#" class="btn btn-primary">Go somewhere</a> */}
-                </div>
-            </div> 
-            :
-                <CreateProposal 
+                <hr className="mt-3"/>
+            </>
+            : ""}
+            {currentProposal != null ?
+                <>
+                    <div className="card">
+                        <div className="card-header">
+                            Current Proposal 
+                            <FontAwesomeIcon 
+                                onClick={refresh} 
+                                icon={["fas", "sync"]}
+                                style={{"color": "#18bc9c", "cursor": "pointer", "marginLeft": "1rem"}} />
+                            
+                                { refreshing ?
+                                <div 
+                                    class="spinner-grow text-success"
+                                    style={{"marginLeft": "1rem"}}
+                                     role="status"></div>
+                                     :""
+                                }
+                        </div>
+                        <div className="card-body">
+                            <h5 className="card-title">Status: {currentProposal.status}</h5>
+                            <p className="card-text">{currentProposal.description}</p>
+                            {
+                                currentProposal.hasVoted || currentProposal.status != "Active" ? "" :
+                                    <>
+                                        <button 
+                                            className="btn btn-success"
+                                            onClick={()=>vote(1)}>Vote For</button>
+                                        <button 
+                                            className="btn btn-danger"
+                                            onClick={()=>vote(0)}>Vote Against</button>
+                                    </>
+                            }
+                            {
+                                currentProposal.hasVoted ? <p className="text-info">Thank you for voting</p> : ""
+                            }
+                        </div>
+                    </div>
+                    <Modal show={waitingForVote}>
+                        <Modal.Header>Just a Moment...</Modal.Header>
+                        <Modal.Body>
+                            We're casting your vote!
+                            <div className="spinner-border text-primary" role="status">
+                                <span className="sr-only"></span>
+                            </div>
+                        </Modal.Body>
+                    </Modal>
+                    <hr/>
+                </>
+                :
+                <CreateProposal
                     currentGameDifficulty={props.currentGameDifficulty}
                     handleDifficultyChange={handleDifficultyChange}
                     handleDescriptionChange={handleDescriptionChange}

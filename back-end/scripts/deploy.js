@@ -25,7 +25,7 @@ async function main(){
 
     //Deploy the governance contract 
     let multiFactionDao = await deploy ("MultiFactionDao", 
-        [factionVotes.address, timelockController.address, 1, 2, 1,5])
+        [factionVotes.address, timelockController.address, 1, 2, 5,10])
 
     //get roles;
     let proposerRole = await timelockController.PROPOSER_ROLE();
