@@ -100,10 +100,8 @@ export default function Proposal(props) {
                 calldata: proposalInfo[2]
             };
 
-            if (statusId == 0){
-                proposal.voteStart = await getVotingStart(proposalId);
-                proposal.voteEnd = await getVotingEnd(proposalId);
-            }
+            proposal.voteStart = await getVotingStart(proposalId);
+            proposal.voteEnd = await getVotingEnd(proposalId);
 
             if (isProposalInProgress(statusId)) {
                 setCurrentProposal(proposal)

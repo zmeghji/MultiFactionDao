@@ -96,6 +96,9 @@ function App() {
   }
 
   const accountChangedHandler = async (newAccount) => {
+    if (defaultAccount != null){
+      window.location.reload()
+    }
 		setDefaultAccount(newAccount);
 		await updateEthers();
 	}
