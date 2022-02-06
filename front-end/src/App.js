@@ -151,6 +151,7 @@ function App() {
                     governorContract={governorContract}
                     gameAddress={gameAddress}
                     defaultAccount={defaultAccount}
+                    provider={provider}
                     />:""}
                   
 

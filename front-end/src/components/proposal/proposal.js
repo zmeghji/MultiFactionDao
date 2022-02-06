@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ethers } from "ethers";
+import { ethers,BigNumber } from "ethers";
 import gameAbi from '../../abis/Game.json';
 import Modal from "react-bootstrap/Modal";
 
@@ -23,6 +23,9 @@ library.add(
 export default function Proposal(props) {
     const [difficulty, setDifficulty] = useState(0);
     const [description, setDescription] = useState(0);
+
+    const [currentBlock, setCurrentBlock] = useState(0);
+
 
     const [creatingProposal, setCreatingProposal] = useState(false);
     const [waitingForVote, setWaitingForVote] = useState(false);
@@ -73,35 +76,40 @@ export default function Proposal(props) {
             throw "Unknown status Id"
         }
     }
+    const refreshCurrentBlock = async () =>{
+        setCurrentBlock (await props.provider.getBlockNumber());
+    }
     useEffect(async function () {
         if (currentProposal === null && previousProposal ===null) {
+            await refreshCurrentBlock();
             let proposalInfo = await Promise.all([
                 props.governorContract.mostRecentProposalId(),
                 props.governorContract.mostRecentProposalDescription(),
                 props.governorContract.mostRecentProposalCalldatas(0),
             ]);
 
+            let proposalId = proposalInfo[0];
+            let statusId = await getStatus(proposalId);
+            let hasVoted = await props.governorContract.hasVoted(proposalId, props.defaultAccount);
 
-            let statusId = await getStatus(proposalInfo[0]);
+            let proposal = {
+                proposalId: proposalId,
+                description: proposalInfo[1],
+                status: getStatusName(statusId),
+                hasVoted: hasVoted,
+                calldata: proposalInfo[2]
+            };
 
-            let hasVoted = await props.governorContract.hasVoted(proposalInfo[0], props.defaultAccount);
+            if (statusId == 0){
+                proposal.voteStart = await getVotingStart(proposalId);
+                proposal.voteEnd = await getVotingEnd(proposalId);
+            }
+
             if (isProposalInProgress(statusId)) {
-                setCurrentProposal({
-                    proposalId: proposalInfo[0],
-                    description: proposalInfo[1],
-                    status: getStatusName(statusId),
-                    hasVoted: hasVoted,
-                    calldata: proposalInfo[2]
-                })
+                setCurrentProposal(proposal)
             }
             else{
-                setPreviousProposal({
-                    proposalId: proposalInfo[0],
-                    description: proposalInfo[1],
-                    status: getStatusName(statusId),
-                    hasVoted: hasVoted,
-                    calldata: proposalInfo[2]
-                })
+                setPreviousProposal(proposal)
             }
 
 
@@ -109,6 +117,10 @@ export default function Proposal(props) {
 
     })
 
+    const getVotingEnd = async (proposalId) =>
+        (await props.governorContract.proposalDeadline(proposalId)).toNumber();
+    const getVotingStart = async (proposalId) =>
+        (await props.governorContract.proposalSnapshot(proposalId)).toNumber();
     const handleDifficultyChange = (event) => {
         setDifficulty(event.target.value);
     }
@@ -128,6 +140,9 @@ export default function Proposal(props) {
             let values = [0];
             let calldatas = [encodedFunction];
             let fullDescription = `${description} Upon execution, this proposal will change the game difficulty to ${difficulty}`;
+
+            let proposalId = hashProposal(
+                targets, values, calldatas, fullDescription)
             let tx = await props.governorContract.propose(
                 targets,
                 values,
@@ -138,14 +153,26 @@ export default function Proposal(props) {
             setCurrentProposal({
                 targets: targets,
                 values: values,
-                calldatas: calldatas,
+                calldata: calldatas,
                 description: fullDescription,
-                status: getStatusName(0)
+                status: getStatusName(0),
+                voteStart: await getVotingStart(proposalId),
+                voteEnd: await getVotingEnd(proposalId),
+                proposalId: proposalId
             })
         }
         finally {
             setCreatingProposal(false);
         }
+    }
+
+    const hashProposal =  (targets, values, calldatas, description) =>{
+        let hashedDescription =ethers.utils.id(description);
+        let encoded = ethers.utils.defaultAbiCoder.encode(
+            [ "address[]", "uint256[]", "bytes[]","bytes32" ], 
+            [ targets, values, calldatas, hashedDescription ])
+        let hash = ethers.utils.keccak256(encoded); 
+        return BigNumber.from(hash);
     }
 
     const vote = async (direction) => {
@@ -170,6 +197,7 @@ export default function Proposal(props) {
     }
     const refresh = async () =>{
         console.log("refreshing")
+        await refreshCurrentBlock();
         //TODO handle case where proposal id is not stored
         setRefreshing(true);
         let statusId = await  getStatus(currentProposal.proposalId);
@@ -229,6 +257,14 @@ export default function Proposal(props) {
         }
     }
 
+    const blocksLeftForVotingStart = () =>{
+        return  currentProposal.voteStart -currentBlock + 1;
+    }
+
+    const blocksLeftForVotingEnd = () =>{
+        return currentProposal.voteEnd  -currentBlock  + 1;
+    }
+
     return (
         <>
             {previousProposal != null && currentProposal== null ? 
@@ -265,6 +301,16 @@ export default function Proposal(props) {
                         </div>
                         <div className="card-body">
                             <h5 className="card-title">Status: {currentProposal.status}</h5>
+                            {
+                                currentProposal.status == "Pending"?
+                                <p className="card-text text-danger">{blocksLeftForVotingStart()} blocks until voting starts (approximately {blocksLeftForVotingStart()*15} seconds)</p>
+                                : ""
+                            }
+                            {
+                                currentProposal.status == "Active"?
+                                <p className="card-text text-danger">{blocksLeftForVotingEnd()} blocks until voting ends (approximately {blocksLeftForVotingEnd()*15} seconds)</p>
+                                : ""
+                            }
                             <p className="card-text">{currentProposal.description}</p>
                             {
                                 currentProposal.hasVoted || currentProposal.status != "Active" ? "" :
