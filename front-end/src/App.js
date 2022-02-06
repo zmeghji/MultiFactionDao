@@ -155,6 +155,7 @@ function App() {
                     gameAddress={gameAddress}
                     defaultAccount={defaultAccount}
                     provider={provider}
+                    tokenBalance={tokenBalance}
                     />:""}
                   
 

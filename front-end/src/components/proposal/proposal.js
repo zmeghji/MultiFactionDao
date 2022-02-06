@@ -2,7 +2,6 @@ import React, { useState, useEffect, PureComponent } from 'react'
 import { ethers, BigNumber } from "ethers";
 import gameAbi from '../../abis/Game.json';
 import Modal from "react-bootstrap/Modal";
-import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 import CreateProposal from './createProposal.js';
 import VotesChart from './votesChart';
@@ -57,7 +56,16 @@ export default function Proposal(props) {
     const getVotes = async (proposalId) => {
         return mapVotes(await props.governorContract.proposalVotes(proposalId));
     }
-
+    const createEmptyVoteSet = () =>{
+        //todo change hard-coded 3 to nextTokenId
+        return [...Array(3).keys()].map( tokenId => {
+            return {
+                for: 0,
+                against:0,
+                name :getFaction(tokenId)
+            }
+        })
+    }
     useEffect(async function () {
         if (currentProposal === null && previousProposal === null) {
             await refreshCurrentBlock();
@@ -129,6 +137,7 @@ export default function Proposal(props) {
                 fullDescription
             )
             await tx.wait()
+            await refreshCurrentBlock();
             setCurrentProposal({
                 targets: targets,
                 values: values,
@@ -137,7 +146,8 @@ export default function Proposal(props) {
                 status: getStatusName(0),
                 voteStart: await getVotingStart(proposalId),
                 voteEnd: await getVotingEnd(proposalId),
-                proposalId: proposalId
+                proposalId: proposalId,
+                votes: createEmptyVoteSet()
             })
         }
         finally {
@@ -155,7 +165,6 @@ export default function Proposal(props) {
     }
 
     const vote = async (direction) => {
-        //TODO implement case where we don't currently have the proposal id, either by doing client side hash or calling hash proposal
         try {
             setWaitingForVote(true);
             let tx = await props.governorContract.castVote(currentProposal.proposalId, direction);
@@ -163,6 +172,17 @@ export default function Proposal(props) {
 
             let tmpProposal = currentProposal;
             tmpProposal.hasVoted = true;
+            
+            tmpProposal.votes= tmpProposal.votes.map( (tokenVote, tokenId) => {
+                if (direction ==1){
+                    tokenVote.for += props.tokenBalance[tokenId];
+                }
+                else{
+                    tokenVote.against += props.tokenBalance[tokenId];
+                }
+                return tokenVote;
+            })
+            
             setCurrentProposal(tmpProposal);
         }
         finally {
