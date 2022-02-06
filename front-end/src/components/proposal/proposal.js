@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react'
-import { ethers,BigNumber } from "ethers";
+import React, { useState, useEffect, PureComponent } from 'react'
+import { ethers, BigNumber } from "ethers";
 import gameAbi from '../../abis/Game.json';
 import Modal from "react-bootstrap/Modal";
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 import CreateProposal from './createProposal.js';
+import VotesChart from './votesChart';
 
+import {getFaction, getStatusName} from "../../modules/helpers";
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
-  faSync
+    faSync
 } from '@fortawesome/free-solid-svg-icons'
+
+
 
 library.add(
     faSync
 )
-
-
-
 
 export default function Proposal(props) {
     const [difficulty, setDifficulty] = useState(0);
@@ -47,40 +49,17 @@ export default function Proposal(props) {
                 return false;
         }
     }
-    const getStatusName = (statusId) => {
-        if (statusId == 0) {
-            return "Pending";
-        }
-        else if (statusId == 1) {
-            return "Active";
-        }
-        else if (statusId == 2) {
-            return "Canceled";
-        }
-        else if (statusId == 3) {
-            return "Defeated";
-        }
-        else if (statusId == 4) {
-            return "Succeeded";
-        }
-        else if (statusId == 5) {
-            return "Queued";
-        }
-        else if (statusId == 6) {
-            return "Expired";
-        }
-        else if (statusId == 7) {
-            return "Executed";
-        }
-        else {
-            throw "Unknown status Id"
-        }
+
+    const refreshCurrentBlock = async () => {
+        setCurrentBlock(await props.provider.getBlockNumber());
     }
-    const refreshCurrentBlock = async () =>{
-        setCurrentBlock (await props.provider.getBlockNumber());
+
+    const getVotes = async (proposalId) => {
+        return mapVotes(await props.governorContract.proposalVotes(proposalId));
     }
+
     useEffect(async function () {
-        if (currentProposal === null && previousProposal ===null) {
+        if (currentProposal === null && previousProposal === null) {
             await refreshCurrentBlock();
             let proposalInfo = await Promise.all([
                 props.governorContract.mostRecentProposalId(),
@@ -92,6 +71,8 @@ export default function Proposal(props) {
             let statusId = await getStatus(proposalId);
             let hasVoted = await props.governorContract.hasVoted(proposalId, props.defaultAccount);
 
+            // let votes = await getVotes(proposalId);
+
             let proposal = {
                 proposalId: proposalId,
                 description: proposalInfo[1],
@@ -102,11 +83,11 @@ export default function Proposal(props) {
 
             proposal.voteStart = await getVotingStart(proposalId);
             proposal.voteEnd = await getVotingEnd(proposalId);
-
+            proposal.votes = await getVotes(proposalId)
             if (isProposalInProgress(statusId)) {
                 setCurrentProposal(proposal)
             }
-            else{
+            else {
                 setPreviousProposal(proposal)
             }
 
@@ -164,18 +145,18 @@ export default function Proposal(props) {
         }
     }
 
-    const hashProposal =  (targets, values, calldatas, description) =>{
-        let hashedDescription =ethers.utils.id(description);
+    const hashProposal = (targets, values, calldatas, description) => {
+        let hashedDescription = ethers.utils.id(description);
         let encoded = ethers.utils.defaultAbiCoder.encode(
-            [ "address[]", "uint256[]", "bytes[]","bytes32" ], 
-            [ targets, values, calldatas, hashedDescription ])
-        let hash = ethers.utils.keccak256(encoded); 
+            ["address[]", "uint256[]", "bytes[]", "bytes32"],
+            [targets, values, calldatas, hashedDescription])
+        let hash = ethers.utils.keccak256(encoded);
         return BigNumber.from(hash);
     }
 
     const vote = async (direction) => {
         //TODO implement case where we don't currently have the proposal id, either by doing client side hash or calling hash proposal
-        try{
+        try {
             setWaitingForVote(true);
             let tx = await props.governorContract.castVote(currentProposal.proposalId, direction);
             await tx.wait()
@@ -184,29 +165,42 @@ export default function Proposal(props) {
             tmpProposal.hasVoted = true;
             setCurrentProposal(tmpProposal);
         }
-        finally{
+        finally {
             setWaitingForVote(false);
         }
 
     }
 
-    const getStatus = async (proposalId) =>{
+    const getStatus = async (proposalId) => {
         return await props.governorContract.state(proposalId);
     }
-    const refresh = async () =>{
+
+    const mapVotes = (proposalVotes) =>{
+        return proposalVotes.map((tokenVotes, tokenId) =>{
+
+            return {
+                name: getFaction(tokenId),
+                against: tokenVotes["againstVotes"].toNumber(),
+                for: tokenVotes["forVotes"].toNumber()
+            }
+        })
+    };
+    const refresh = async () => {
         console.log("refreshing")
         await refreshCurrentBlock();
         //TODO handle case where proposal id is not stored
         setRefreshing(true);
-        let statusId = await  getStatus(currentProposal.proposalId);
+
+        let statusId = await getStatus(currentProposal.proposalId);
 
         let tmpCurrentProposal = currentProposal;
-        tmpCurrentProposal.status = getStatusName(statusId) ;
-        if (!isProposalInProgress(statusId)){
+        tmpCurrentProposal.status = getStatusName(statusId);
+        tmpCurrentProposal.votes = await getVotes(currentProposal.proposalId);
+        if (!isProposalInProgress(statusId)) {
             setPreviousProposal(tmpCurrentProposal);
             setCurrentProposal(null);
         }
-        else{
+        else {
             setCurrentProposal(tmpCurrentProposal);
         }
 
@@ -214,8 +208,8 @@ export default function Proposal(props) {
         setRefreshing(false);
     }
 
-    const queue = async () =>{
-        try{
+    const queue = async () => {
+        try {
             setQueuingProposal(true);
             let tx = await props.governorContract.queue(
                 [props.gameAddress],
@@ -228,13 +222,13 @@ export default function Proposal(props) {
             tmpCurrentProposal.status = "Queued"
             setCurrentProposal(tmpCurrentProposal);
         }
-        finally{
+        finally {
             setQueuingProposal(false);
         }
     }
 
-    const execute = async () =>{
-        try{
+    const execute = async () => {
+        try {
             setExecutingProposal(true);
             let tx = await props.governorContract.execute(
                 [props.gameAddress],
@@ -248,99 +242,104 @@ export default function Proposal(props) {
             tmpCurrentProposal.status = "Executed"
             setPreviousProposal(tmpCurrentProposal);
             setCurrentProposal(null);
-            
+
         }
-        finally{
+        finally {
             setExecutingProposal(false);
         }
     }
 
-    const blocksLeftForVotingStart = () =>{
-        return  currentProposal.voteStart -currentBlock + 1;
+    const blocksLeftForVotingStart = () => {
+        return currentProposal.voteStart - currentBlock + 1;
     }
 
-    const blocksLeftForVotingEnd = () =>{
-        return currentProposal.voteEnd  -currentBlock  + 1;
+    const blocksLeftForVotingEnd = () => {
+        return currentProposal.voteEnd - currentBlock + 1;
     }
 
     return (
         <>
-            {previousProposal != null && currentProposal== null ? 
-            <>
-                <div className="card">
-                    <div className="card-header">
-                        Previous Proposal
+            {previousProposal != null && currentProposal == null ?
+                <>
+                    <div className="card">
+                        <div className="card-header">
+                            Previous Proposal
+                        </div>
+                        <div className="card-body">
+                            <h5 className="card-title">Status: {previousProposal.status}</h5>
+                            <p className="card-text">{previousProposal.description}</p>
+
+                            <VotesChart votes={previousProposal.votes} />
+
+                        </div>
                     </div>
-                    <div className="card-body">
-                        <h5 className="card-title">Status: {previousProposal.status}</h5>
-                        <p className="card-text">{previousProposal.description}</p>
-                    </div>
-                </div>
-                <hr className="mt-3"/>
-            </>
-            : ""}
+                    <hr className="mt-3" />
+                </>
+                : ""}
             {currentProposal != null ?
                 <>
                     <div className="card">
                         <div className="card-header">
                             Current Proposal
-                            <FontAwesomeIcon 
-                                onClick={refresh} 
+                            <FontAwesomeIcon
+                                onClick={refresh}
                                 icon={["fa", "sync"]}
-                                style={{"color": "#18bc9c", "cursor": "pointer", "marginLeft": "1rem"}} />
-                            
-                                { refreshing ?
-                                <div 
+                                style={{ "color": "#18bc9c", "cursor": "pointer", "marginLeft": "1rem" }} />
+
+                            {refreshing ?
+                                <div
                                     className="spinner-grow text-success"
-                                    style={{"marginLeft": "1rem"}}
-                                     role="status"></div>
-                                     :""
-                                }
+                                    style={{ "marginLeft": "1rem" }}
+                                    role="status"></div>
+                                : ""
+                            }
                         </div>
                         <div className="card-body">
                             <h5 className="card-title">Status: {currentProposal.status}</h5>
                             {
-                                currentProposal.status == "Pending"?
-                                <p className="card-text text-danger">{blocksLeftForVotingStart()} blocks until voting starts (approximately {blocksLeftForVotingStart()*15} seconds)</p>
-                                : ""
+                                currentProposal.status == "Pending" ?
+                                    <p className="card-text text-danger">{blocksLeftForVotingStart()} blocks until voting starts (approximately {blocksLeftForVotingStart() * 15} seconds)</p>
+                                    : ""
                             }
                             {
-                                currentProposal.status == "Active"?
-                                <p className="card-text text-danger">{blocksLeftForVotingEnd()} blocks until voting ends (approximately {blocksLeftForVotingEnd()*15} seconds)</p>
-                                : ""
+                                currentProposal.status == "Active" ?
+                                    <p className="card-text text-danger">{blocksLeftForVotingEnd()} blocks until voting ends (approximately {blocksLeftForVotingEnd() * 15} seconds)</p>
+                                    : ""
                             }
                             <p className="card-text">{currentProposal.description}</p>
                             {
                                 currentProposal.hasVoted || currentProposal.status != "Active" ? "" :
                                     <>
-                                        <button 
+                                        <button
                                             className="btn btn-success"
-                                            onClick={()=>vote(1)}>Vote For</button>
-                                        <button 
+                                            onClick={() => vote(1)}>Vote For</button>
+                                        <button
                                             className="btn btn-danger"
-                                            onClick={()=>vote(0)}>Vote Against</button>
+                                            onClick={() => vote(0)}>Vote Against</button>
                                     </>
                             }
                             {
-                                currentProposal.hasVoted &&currentProposal.status == "Active"? <p className="text-info">Thank you for voting</p> : ""
+                                currentProposal.hasVoted && currentProposal.status == "Active" ? <p className="text-info">Thank you for voting</p> : ""
                             }
 
                             {
-                                currentProposal.status == "Succeeded"?
-                                <button 
-                                    className="btn btn-warning"
-                                    onClick={queue}>Queue For Execution</button>
-                                
-                                :""
+                                currentProposal.status == "Succeeded" ?
+                                    <button
+                                        className="btn btn-warning"
+                                        onClick={queue}>Queue For Execution</button>
+
+                                    : ""
                             }
                             {
-                                currentProposal.status == "Queued"?
-                                <button 
-                                    className="btn btn-secondary"
-                                    onClick={execute}>Execute Proposal</button>
-                                
-                                :""
+                                currentProposal.status == "Queued" ?
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={execute}>Execute Proposal</button>
+
+                                    : ""
                             }
+                            <VotesChart votes={currentProposal.votes} />
+                            
                         </div>
                     </div>
                     <Modal show={waitingForVote}>
@@ -370,7 +369,7 @@ export default function Proposal(props) {
                             </div>
                         </Modal.Body>
                     </Modal>
-                    <hr/>
+                    <hr />
                 </>
                 :
                 <CreateProposal

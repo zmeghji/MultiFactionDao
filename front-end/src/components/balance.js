@@ -1,24 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import logo from '../logo.svg';
-
-import styled from 'styled-components';
-import { useOutletContext } from "react-router-dom";
-
 import Modal from "react-bootstrap/Modal";
-
+import {getFaction} from "../modules/helpers";
 export default function Balance(props) {
-    const getFaction = (tokenId) => {
-        if (tokenId == 0)
-            return "Cyber Ninjas";
-        else if (tokenId == 1)
-            return "Crypto Samurais"
-        else if (tokenId == 2)
-            return "Meta Shoguns"
-        else
-            throw "Unknown TokenId"
-    }
-
-
 
     return (
         <table className="table table-dark">

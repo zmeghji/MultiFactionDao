@@ -5,7 +5,8 @@ import styled from 'styled-components';
 const Div = styled.section`
     padding-left: 0px;
     @media only screen and (min-width: 755px) {
-        min-height:80vh;
+        min-height:100%;
+        height:80vh;
     }
 `
 

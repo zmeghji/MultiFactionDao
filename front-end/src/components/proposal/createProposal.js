@@ -12,7 +12,7 @@ export default function CreateProposal(props) {
     return (
         <>
             
-            <form>
+            <form style={{"border": "1px solid rgba(0,0,0,.125)"}}>
                 <div className="card-header">
                     Create New Proposal
                 </div>
