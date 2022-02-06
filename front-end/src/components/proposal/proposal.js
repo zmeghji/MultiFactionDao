@@ -23,6 +23,9 @@ export default function Proposal(props) {
     const [previousProposal, setPreviousProposal] = useState(null);
 
     const [currentProposal, setCurrentProposal] = useState(null);
+
+    const [pageLoading, setPageLoading] = useState(true);
+
     const isProposalInProgress = (statusId) => {
         switch (statusId) {
             case 0:
@@ -84,10 +87,10 @@ export default function Proposal(props) {
             else {
                 setPreviousProposal(proposal)
             }
-
-
         }
-
+        if (pageLoading){
+            setPageLoading(false);
+        }
     })
 
     const getVotingEnd = async (proposalId) =>
@@ -264,11 +267,20 @@ export default function Proposal(props) {
 
     return (
         <>
-            {previousProposal != null && currentProposal == null ?
+        {
+            pageLoading ? 
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="sr-only"></span>
+                </div>
+            </div>
+            : ""
+        }
+            {previousProposal != null && currentProposal == null && !pageLoading?
                 <PreviousProposal 
                     proposal={previousProposal}/>
                 : ""}
-            {currentProposal != null ?
+            {currentProposal != null && !pageLoading?
                 < CurrentProposal
                     proposal={currentProposal}
                     refresh={refresh}
@@ -282,7 +294,12 @@ export default function Proposal(props) {
                     queuingProposal={queuingProposal}
                     executingProposal={executingProposal}
                      />
-                :
+                :""
+                
+            }
+
+            {
+                currentProposal == null && !pageLoading ? 
                 <CreateProposal
                     currentGameDifficulty={props.currentGameDifficulty}
                     handleDifficultyChange={handleDifficultyChange}
@@ -290,6 +307,7 @@ export default function Proposal(props) {
                     createProposal={createProposal}
                     creatingProposal={creatingProposal}
                 />
+                : ""
             }
         </>
 
