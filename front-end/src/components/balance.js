@@ -32,8 +32,8 @@ export default function Balance(props) {
                     <Modal.Header>Just a Moment...</Modal.Header>
                     <Modal.Body>
                         We're getting the tokens for you! This could take up to 30 seconds.
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="sr-only"></span>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="sr-only"></span>
                         </div>
                     </Modal.Body>
                 </Modal>
