@@ -121,7 +121,9 @@ function App() {
 	}
 
   // listen for account changes
-	window.ethereum.on('accountsChanged', accountChangedHandler);
+  if (window.ethereum){
+	  window.ethereum.on('accountsChanged', accountChangedHandler);
+  }
 
   return (
     <div className="App container-fluid">

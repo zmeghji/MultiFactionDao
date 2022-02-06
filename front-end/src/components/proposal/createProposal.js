@@ -50,6 +50,7 @@ export default function CreateProposal(props) {
                     className="btn btn-primary"
                     onClick={props.createProposal}>Submit Proposal</button>
             </form>
+            <hr className="mt-3" />
 
 
             <Modal show={props.creatingProposal}>

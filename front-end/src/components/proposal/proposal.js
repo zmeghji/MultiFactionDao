@@ -276,6 +276,17 @@ export default function Proposal(props) {
             </div>
             : ""
         }
+            {
+                currentProposal == null && !pageLoading ? 
+                <CreateProposal
+                    currentGameDifficulty={props.currentGameDifficulty}
+                    handleDifficultyChange={handleDifficultyChange}
+                    handleDescriptionChange={handleDescriptionChange}
+                    createProposal={createProposal}
+                    creatingProposal={creatingProposal}
+                />
+                : ""
+            }
             {previousProposal != null && currentProposal == null && !pageLoading?
                 <PreviousProposal 
                     proposal={previousProposal}/>
@@ -298,17 +309,7 @@ export default function Proposal(props) {
                 
             }
 
-            {
-                currentProposal == null && !pageLoading ? 
-                <CreateProposal
-                    currentGameDifficulty={props.currentGameDifficulty}
-                    handleDifficultyChange={handleDifficultyChange}
-                    handleDescriptionChange={handleDescriptionChange}
-                    createProposal={createProposal}
-                    creatingProposal={creatingProposal}
-                />
-                : ""
-            }
+            
         </>
 
 

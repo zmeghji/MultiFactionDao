@@ -19,12 +19,16 @@ export default function LogIn(props){
     return (
         <>
             <Section>
-            {props.getDefaultAccount() ===null ?  
+            {props.getDefaultAccount() ?
+                `Welcome ${props.getDefaultAccount()}`
+                : ""
+            }
+
+            {props.getDefaultAccount() ===null && window.ethereum?  
                 <Button 
                     className="btn btn-warning"
                     onClick={props.connectWalletHandler}>Log In</Button>
-                :
-                `Welcome ${props.getDefaultAccount()}`
+                :""
             }
                 
             </Section>
