@@ -1,6 +1,4 @@
-/* .App {
-  text-align: center;
-} */
+
 
 .App-logo {
   height: 40vmin;
@@ -9,7 +7,7 @@
 
 
 @media (prefers-reduced-motion: no-preference) {
-  .Refresh-spin {
+  .App-logo {
     animation: App-logo-spin infinite 20s linear;
   }
 }

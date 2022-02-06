@@ -38,7 +38,7 @@ export default function CreateProposal(props) {
                     </select>
                 </div>
                 <div className="form-group">
-                    <label htmlFor="proposalDescription">Unique Description of Proposal</label>
+                    <label htmlFor="proposalDescription">Description</label>
                     <textarea
                         className="form-control"
                         id="proposalDescription"

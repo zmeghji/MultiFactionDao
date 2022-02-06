@@ -23,9 +23,9 @@ import Proposal from './components/proposal/proposal.js';
 
 
 function App() {
-  let tokenAddress = '0x400140952B9AAABD38c8d66f0B0A809327b248e1';
-  let gameAddress = '0x972E781A7b6f510A47874405d0298C90F5681AD7';
-  let governorAddress = '0xD1A4106127AE4aD400a5e71F78e9FF8845010D5B';
+  let tokenAddress = '0xE222Fb4AF4314563282cfAC7b4737623C0955Ed8';
+  let gameAddress = '0xAe124b61e03119B2dCd62F23134c150cA9bC98C4';
+  let governorAddress = '0xEcC2cfE07a142880F73Ba819f33B020BCEaD0B27';
 
 
   const [provider, setProvider] = useState(null);

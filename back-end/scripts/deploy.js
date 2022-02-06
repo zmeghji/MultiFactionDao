@@ -25,7 +25,7 @@ async function main(){
 
     //Deploy the governance contract 
     let multiFactionDao = await deploy ("MultiFactionDao", 
-        [factionVotes.address, timelockController.address, 1, 2, 5,10])
+        [factionVotes.address, timelockController.address, 1, 2, 5,20])
 
     //get roles;
     let proposerRole = await timelockController.PROPOSER_ROLE();
@@ -48,6 +48,26 @@ async function main(){
     await game.transferOwnership(timelockController.address);
     console.log("Transferred ownership of game to timelock controller");
 
+    // Create initial test proposal 
+    let ABI = [
+        "function setDifficulty(uint256 _difficulty) external"
+    ];
+    let gameInterface = new hre.ethers.utils.Interface(ABI);
+    let encodedFunction = gameInterface.encodeFunctionData(
+        "setDifficulty",[0]
+    );
+
+    let targets = [game.address]
+    let values  = [0];
+    let calldatas = [encodedFunction];
+    let description = "This is simply the first test proposal. Executing it will not actually change the game's difficulty.";
+    await multiFactionDao.propose(
+        targets,
+        values,
+        calldatas,
+        description
+    )
+    console.log("Created proposal");
 }
 
 async function deploy(contractName, constructorArgs){

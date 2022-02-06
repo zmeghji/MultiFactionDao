@@ -37,10 +37,8 @@ export default function VotesChart(props) {
                     </div>
                 </div>
             </div>
-            <ResponsiveContainer width="70%" height="62%">
+            <ResponsiveContainer width="65%" height="60%" debounce={1}>
                 <BarChart
-                    width={500}
-                    height={300}
                     data={props.votes }
                     margin={{
                         top: 5,
@@ -53,7 +51,7 @@ export default function VotesChart(props) {
                     <XAxis dataKey="name" />
                     <YAxis />
                     <Tooltip />
-                    <Legend />
+                    <Legend align="center" verticalAlign='bottom'/>
                     <Bar dataKey="for" fill="#82ca9d" />
                     <Bar dataKey="against" fill="#d52727" />
                 </BarChart>

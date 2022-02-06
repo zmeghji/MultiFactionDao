@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
-import logo from '../logo.svg';
-
+import star from '../star.png';
 import styled from 'styled-components';
 
 const HeaderTag = styled.section`
@@ -20,7 +19,7 @@ const Img = styled.img`
 export default function Header (props){
     return (
         <HeaderTag >
-            <Img src={logo} alt="logo" className="App-logo" />
+            <Img src={star} alt="logo" className="App-logo" />
             <h1>Multi-Faction DAO</h1>
         </HeaderTag>
         )

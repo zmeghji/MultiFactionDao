@@ -7,6 +7,7 @@ import PreviousProposal from './previousProposal.js';
 import CurrentProposal from './currentProposal.js';
 
 import {getFaction, getStatusName} from "../../modules/helpers";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function Proposal(props) {
     const [difficulty, setDifficulty] = useState(0);
@@ -65,22 +66,29 @@ export default function Proposal(props) {
             ]);
 
             let proposalId = proposalInfo[0];
-            let statusId = await getStatus(proposalId);
-            let hasVoted = await props.governorContract.hasVoted(proposalId, props.defaultAccount);
 
-            // let votes = await getVotes(proposalId);
+            let proposalDetails = await Promise.all([
+                getStatus(proposalId),
+                props.governorContract.hasVoted(proposalId, props.defaultAccount),
+                getVotingStart(proposalId),
+                getVotingEnd(proposalId),
+                getVotes(proposalId)
+            ])
+
+            let statusId = proposalDetails[0];
+            let hasVoted = proposalDetails[1];
 
             let proposal = {
                 proposalId: proposalId,
                 description: proposalInfo[1],
                 status: getStatusName(statusId),
                 hasVoted: hasVoted,
-                calldata: proposalInfo[2]
+                calldata: proposalInfo[2],
+                voteStart: proposalDetails[2],
+                voteEnd: proposalDetails[3],
+                votes: proposalDetails[4]
             };
 
-            proposal.voteStart = await getVotingStart(proposalId);
-            proposal.voteEnd = await getVotingEnd(proposalId);
-            proposal.votes = await getVotes(proposalId)
             if (isProposalInProgress(statusId)) {
                 setCurrentProposal(proposal)
             }
@@ -115,7 +123,7 @@ export default function Proposal(props) {
             let targets = [props.gameAddress];
             let values = [0];
             let calldatas = [encodedFunction];
-            let fullDescription = `${description} Upon execution, this proposal will change the game difficulty to ${difficulty}`;
+            let fullDescription = `${description} Upon execution, this proposal will change the game difficulty to ${difficulty}. The external proposal id is ${uuidv4()}.`;
 
             let proposalId = hashProposal(
                 targets, values, calldatas, fullDescription)
@@ -126,15 +134,20 @@ export default function Proposal(props) {
                 fullDescription
             )
             await tx.wait()
-            await refreshCurrentBlock();
+
+            let voteInfo = await Promise.all([
+                getVotingStart(proposalId),
+                getVotingEnd(proposalId),
+                refreshCurrentBlock()]
+            );
             setCurrentProposal({
                 targets: targets,
                 values: values,
                 calldata: calldatas,
                 description: fullDescription,
                 status: getStatusName(0),
-                voteStart: await getVotingStart(proposalId),
-                voteEnd: await getVotingEnd(proposalId),
+                voteStart: voteInfo[0],
+                voteEnd: voteInfo[1],
                 proposalId: proposalId,
                 votes: createEmptyVoteSet()
             })
@@ -269,9 +282,9 @@ export default function Proposal(props) {
         <>
         {
             pageLoading ? 
-            <div class="d-flex justify-content-center">
-                <div class="spinner-border" role="status">
-                    <span class="sr-only"></span>
+            <div className="d-flex justify-content-center">
+                <div className="spinner-border" role="status">
+                    <span className="sr-only"></span>
                 </div>
             </div>
             : ""
